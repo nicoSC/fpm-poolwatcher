@@ -1,4 +1,4 @@
 fpm-poolwatcher
 ===============
 
-Automatically kills the oldest php-fpm pools
+Automatically kills the processes from the php-fpm pools

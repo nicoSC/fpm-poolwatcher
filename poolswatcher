@@ -1,0 +1,35 @@
+#!/bin/bash
+# Copyright Nicolai Storz <nicostorz@googlemail.com>
+# Licensed under the Apache License, Version 2.0
+
+PS_LIMIT=249;
+
+for i in /etc/php5/fpm/pool.d/*.conf ; do
+	b=$(basename $i)
+
+	if [ "$b" != "defaultwww.conf" ]; then
+		POOL_NAME=$(echo "$b" |cut -d"." -f1)
+		NUM_OF_PROCESSES=$(pgrep -c -f "php-fpm: pool $POOL_NAME");
+
+		echo "Number of processes for pool $POOL_NAME: $NUM_OF_PROCESSES"
+
+		if [ $NUM_OF_PROCESSES -gt $PS_LIMIT ]; then
+			echo
+			echo "Too many processes are running, killing the 2 oldest processes"
+			echo
+
+			FIRST_PS_TO_KILL=$(pgrep -o -f "php-fpm: pool $POOL_NAME")
+			echo "Killing PID $FIRST_PS_TO_KILL ..."
+			
+			kill -9 $FIRST_PS_TO_KILL
+
+			SECOND_PS_TO_KILL=$(pgrep -o -f "php-fpm: pool $POOL_NAME")
+			echo "Killing PID $SECOND_PS_TO_KILL ..."
+
+			kill -9 $SECOND_PS_TO_KILL
+			echo
+
+			logger "[php-fpm pool WATCHER] $POOL_NAME has more than $PS_LIMIT processes running. Killed PIDS: $FIRST_PS_TO_KILL $SECOND_PS_TO_KILL"
+		fi
+	fi
+done
